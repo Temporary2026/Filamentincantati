@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Eye, Heart, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Eye, Heart, Sparkles, ArrowRight } from 'lucide-react';
 
 const Collection = () => {
   const [selectedCategory, setSelectedCategory] = useState('tutti');
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
 
   const categories = [
     { id: 'tutti', name: 'Tutti i Pezzi' },
@@ -12,66 +13,20 @@ const Collection = () => {
     { id: 'bracciali', name: 'Bracciali' }
   ];
 
-  const collection = [
-    {
-      id: 1,
-      name: "Luna d'Amalfi",
-      category: 'collane',
-      image: "/img/WhatsApp Image 2025-06-15 at 13.27.39 (1).jpeg",
-      materials: "Perle di vetro veneziane, cotone cerato",
-      technique: "Micro-macramè",
-      price: "€45"
-    },
-    {
-      id: 2,
-      name: "Sirena",
-      category: 'orecchini',
-      image: "/img/WhatsApp Image 2025-06-15 at 13.27.39 (2).jpeg",
-      materials: "Ottone nickel-free, perle naturali",
-      technique: "Lavorazione a spiga",
-      price: "€28"
-    },
-    {
-      id: 3,
-      name: "Tramonto Dorato",
-      category: 'bracciali',
-      image: "/img/WhatsApp Image 2025-06-15 at 13.27.39 (3).jpeg",
-      materials: "Filati dorati, cristalli sfaccettati",
-      technique: "Avvolgimento a mano",
-      price: "€35"
-    },
-    {
-      id: 4,
-      name: "Petali di Rosa",
-      category: 'orecchini',
-      image: "/img/WhatsApp Image 2025-06-15 at 13.27.39 (4).jpeg",
-      materials: "Perle rosa, argento 925",
-      technique: "Intreccio tradizionale",
-      price: "€32"
-    },
-    {
-      id: 5,
-      name: "Mare Nostrum",
-      category: 'collane',
-      image: "/img/WhatsApp Image 2025-06-15 at 13.27.40 (1).jpeg",
-      materials: "Turchesi naturali, cotone blu",
-      technique: "Nodo marinaro",
-      price: "€42"
-    },
-    {
-      id: 6,
-      name: "Terra Madre",
-      category: 'bracciali',
-      image: "/img/8fe4abe2-1560-4c0c-9be1-135476a6feb6.jpg",
-      materials: "Pietre dure, cuoio naturale",
-      technique: "Intreccio etnico",
-      price: "€38"
+  // Carica i prodotti dal localStorage
+  useEffect(() => {
+    const savedProducts = localStorage.getItem('filamentincantati_products');
+    if (savedProducts) {
+      const allProducts = JSON.parse(savedProducts);
+      // Mostra solo i primi 6 prodotti pubblicati
+      const publishedProducts = allProducts.filter((p: any) => p.isPublished).slice(0, 6);
+      setProducts(publishedProducts);
     }
-  ];
+  }, []);
 
   const filteredCollection = selectedCategory === 'tutti' 
-    ? collection 
-    : collection.filter(item => item.category === selectedCategory);
+    ? products 
+    : products.filter(item => item.category === selectedCategory);
 
   return (
     <section id="collezione" className="py-20 bg-white">
@@ -206,9 +161,17 @@ const Collection = () => {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-pastel-aqua-700 italic text-lg">
+          <p className="text-pastel-aqua-700 italic text-lg mb-8">
             Ogni collezione è limitata e numerata. Non troverai mai due pezzi identici.
           </p>
+          
+          <a
+            href="/all-products"
+            className="inline-flex items-center px-8 py-4 bg-pastel-aqua-600 text-white font-semibold rounded-full hover:bg-pastel-aqua-700 transition-all duration-300 hover:shadow-lg hover:scale-105"
+          >
+            Vedi Tutta la Collezione
+            <ArrowRight className="ml-2" size={20} />
+          </a>
         </div>
       </div>
     </section>
