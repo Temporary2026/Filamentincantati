@@ -113,19 +113,15 @@ const Collection = () => {
             <ul className="space-y-3 text-pastel-aqua-800">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Filati di cotone cerato premium
+                Filati gioiello Basic pure light
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Perle di vetro veneziane autentiche
+                Perle di vetro
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Ottone nickel-free per pelli sensibili
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Pietre naturali certificate
+                Pietre naturali
               </li>
             </ul>
             <p className="text-pastel-aqua-700 mt-4 italic">
@@ -141,21 +137,16 @@ const Collection = () => {
             <ul className="space-y-3 text-pastel-aqua-800">
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Micro-macramè tradizionale
+                Lavorazione manuale con unginetto
               </li>
               <li className="flex items-center">
                 <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Lavorazione a spiga manuale
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Avvolgimento artistico a mano
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Intreccio etnico contemporaneo
+                Lavorazione a rosario
               </li>
             </ul>
+            <p className="text-pastel-aqua-700 mt-12 italic">
+              "Ogni nodo racconta una storia, ogni perla porta con sé un sogno."
+            </p>
           </div>
         </div>
 

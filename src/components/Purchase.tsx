@@ -110,7 +110,7 @@ const Purchase = () => {
             <h3 className="text-2xl font-serif text-pastel-aqua-900 mb-6">Seguimi sui Social</h3>
             <div className="space-y-4">
               <a
-                href="https://instagram.com/filamentincantati"
+                href="https://www.instagram.com/filamentincantati/"
                 className="flex items-center p-4 bg-pastel-rose-50 rounded-xl hover:bg-pastel-rose-100 transition-colors group"
               >
                 <Instagram className="text-pastel-rose-600 mr-4 group-hover:scale-110 transition-transform" size={24} />
@@ -121,7 +121,7 @@ const Purchase = () => {
               </a>
               
               <a
-                href="https://facebook.com/filamentincantati"
+                href="https://www.facebook.com/filamentincantati/"
                 className="flex items-center p-4 bg-pastel-sky-50 rounded-xl hover:bg-pastel-sky-100 transition-colors group"
               >
                 <Facebook className="text-pastel-sky-600 mr-4 group-hover:scale-110 transition-transform" size={24} />

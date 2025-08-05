@@ -6,9 +6,9 @@ const Hero = () => {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/img/WhatsApp Image 2025-06-15 at 13.27.39.jpeg"
+          src="/img/SfondoHero2.jpg"
           alt="Artisan jewelry crafting"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-150 -translate-x-16"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-pastel-aqua-900/80 via-pastel-sky-800/60 to-transparent"></div>
       </div>
@@ -59,7 +59,7 @@ const Hero = () => {
                 <div className="absolute inset-2 bg-white rounded-full transform -rotate-6"></div>
                 <div className="absolute inset-4 overflow-hidden rounded-full transform rotate-3">
                   <img
-                    src="/img/WhatsApp Image 2025-06-15 at 13.27.40.jpeg"
+                    src="/img/IMG_8592.jpg"
                     alt="Handcrafted jewelry detail"
                     className="w-full h-full object-cover"
                   />

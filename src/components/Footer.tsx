@@ -17,14 +17,14 @@ const Footer = () => {
             </p>
             <div className="flex space-x-4">
               <a
-                href="https://instagram.com/filamentincantati"
+                href="https://www.instagram.com/filamentincantati/"
                 className="p-3 bg-pastel-rose-500 rounded-full hover:bg-pastel-rose-400 transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
               </a>
               <a
-                href="https://facebook.com/filamentincantati"
+                href="https://www.facebook.com/filamentincantati/"
                 className="p-3 bg-pastel-sky-500 rounded-full hover:bg-pastel-sky-400 transition-colors"
                 aria-label="Facebook"
               >

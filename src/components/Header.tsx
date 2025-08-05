@@ -6,10 +6,20 @@ const Header = () => {
 
   return (
     <header className="bg-white/95 backdrop-blur-sm fixed w-full top-0 z-50 shadow-pastel">
+      {/* Logo posizionato fuori dal flusso del menu */}
+      <div className="absolute top-0 left-8 z-50">
+        <img 
+          src="/img/logo.png" 
+          alt="Filamentincantati Logo" 
+          className="h-48 w-auto -mt-8 -mb-8 mt-0"
+        />
+      </div>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center py-8">
           <div className="flex items-center">
-            <h1 className="text-2xl font-serif text-pastel-aqua-600">Filamentincantati</h1>
+            {/* Spazio vuoto per bilanciare il layout */}
+            <div className="w-40"></div>
           </div>
           
           <nav className="hidden md:flex space-x-8">

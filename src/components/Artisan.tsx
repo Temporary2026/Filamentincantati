@@ -91,7 +91,7 @@ const Artisan = () => {
               {/* Main Image */}
               <div className="relative z-10">
                 <img
-                  src="/img/WhatsApp Image 2025-06-15 at 13.27.38.jpeg"
+                  src="/img/IMG_8593.jpg"
                   alt="Daniela Liguori at work"
                   className="w-full rounded-2xl shadow-2xl"
                 />
@@ -109,7 +109,7 @@ const Artisan = () => {
               {/* Floating Elements */}
               <div className="absolute top-10 -right-4 bg-white p-4 rounded-lg shadow-lg transform rotate-6 hover:rotate-0 transition-transform duration-300">
                 <img
-                  src="/img/WhatsApp Image 2025-06-15 at 13.27.38 (1).jpeg"
+                  src="/img/IMG_8594.jpg"
                   alt="Jewelry detail"
                   className="w-16 h-16 rounded-lg object-cover"
                 />
@@ -118,7 +118,7 @@ const Artisan = () => {
 
               <div className="absolute bottom-20 -left-8 bg-white p-4 rounded-lg shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
                 <img
-                  src="/img/WhatsApp Image 2025-06-15 at 13.27.38 (2).jpeg"
+                  src="/img/IMG_8643.jpg"
                   alt="Materials"
                   className="w-16 h-16 rounded-lg object-cover"
                 />
