@@ -63,7 +63,11 @@ const AdminPanel = () => {
   // Check TOTP status from server
   const checkTOTPStatus = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/totp/status/orarytempation2026@gmail.com');
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/totp/status/orarytempation2026@gmail.com' 
+        : 'http://localhost:3001/api/totp/status/orarytempation2026@gmail.com';
+        
+      const response = await fetch(apiUrl);
       if (response.ok) {
         const result = await response.json();
         if (result.configured) {
@@ -85,7 +89,11 @@ const AdminPanel = () => {
   // Google Authenticator validation (REAL implementation)
   const validateGoogleAuthenticator = async (code: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:3001/api/totp/verify', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/totp/verify' 
+        : 'http://localhost:3001/api/totp/verify';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +154,11 @@ const AdminPanel = () => {
   const handleFirstTimeSetup = async () => {
     try {
       // Generate new TOTP secret from server
-      const response = await fetch('http://localhost:3001/api/totp/generate', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/totp/generate' 
+        : 'http://localhost:3001/api/totp/generate';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +263,11 @@ const AdminPanel = () => {
       formData.append('image', file);
       
       // Send to server
-      const response = await fetch('http://localhost:3001/api/upload-image', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/upload-image' 
+        : 'http://localhost:3001/api/upload-image';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
       });
