@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f9ff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #14b8a6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0d9488;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid #14b8a6;
+  outline-offset: 2px;
+}
+
+/* Ensure text remains readable during font load */
+body {
+  font-display: swap;
+}
+
+/* Gradients personalizzati per il tema bijoux */
+.bg-gradient-pastel {
+  background: linear-gradient(135deg, #f0f9ff 0%, #f0fdfa 25%, #fdf2f8 50%, #faf5ff 75%, #fff7ed 100%);
+}
+
+.bg-gradient-sky-aqua {
+  background: linear-gradient(135deg, #e0f2fe 0%, #ccfbf1 100%);
+}
+
+.bg-gradient-rose-lavender {
+  background: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
+}
+
+/* Ombre pastello */
+.shadow-pastel {
+  box-shadow: 0 10px 25px -5px rgba(20, 184, 166, 0.1), 0 10px 10px -5px rgba(20, 184, 166, 0.04);
+}
+
+.shadow-pastel-lg {
+  box-shadow: 0 20px 25px -5px rgba(20, 184, 166, 0.1), 0 10px 10px -5px rgba(20, 184, 166, 0.04);
+}
