@@ -55,6 +55,12 @@ npm run dev
 - `npm run dev:full` - Avvia entrambi contemporaneamente
 - `npm run build` - Build per produzione
 
+## 🌐 Accesso al Sito
+
+- **Frontend**: http://localhost:5174/
+- **Backend**: http://localhost:3001/
+- **Admin Panel**: Solo per amministratori autorizzati
+
 ## 🔒 Sicurezza
 
 Il progetto implementa un sistema di autenticazione a due fattori per l'accesso amministrativo. Le credenziali e le configurazioni sensibili sono gestite tramite variabili d'ambiente e non sono mai esposte nel codice sorgente.
@@ -90,4 +96,3 @@ Per supporto tecnico o domande, contattare l'amministratore del sistema.
 ---
 
 **⚠️ IMPORTANTE**: Questo repository contiene solo il codice sorgente pubblico. Le configurazioni sensibili, credenziali e dati amministrativi sono gestiti separatamente e non sono mai committati su GitHub.
-
