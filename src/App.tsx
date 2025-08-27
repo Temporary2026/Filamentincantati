@@ -26,8 +26,7 @@ function App() {
             <Footer />
           </div>
         } />
-        <Route path="/all-products" element={<AllProducts />} />
-        <Route path="/controlpanel0806" element={<AdminPanel />} />
+        {/* Note: pages are now standalone .html entries for Vercel */}
       </Routes>
     </RouterImpl>
   );

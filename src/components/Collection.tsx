@@ -212,7 +212,7 @@ const Collection = () => {
             Ogni collezione è limitata e numerata. Non troverai mai due pezzi identici.
           </p>
           <a
-            href="/all-products"
+            href="/all-products.html"
             className="inline-flex items-center px-8 py-4 bg-pastel-aqua-600 text-white font-bold rounded-full hover:bg-pastel-aqua-700 transition-all duration-300 hover:scale-105 shadow-lg"
           >
             Vedi tutta la collezione →
