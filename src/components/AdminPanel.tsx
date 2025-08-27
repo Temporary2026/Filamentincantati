@@ -64,14 +64,38 @@ const AdminPanel = () => {
     setIsFirstAccess(!savedPassword);
   }, []);
 
-  // Load/save products
-  const loadProducts = () => {
-    const savedProducts = localStorage.getItem('filamentincantati_products');
-    if (savedProducts) setProducts(JSON.parse(savedProducts));
+  // Server persistence (Neon via API)
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) throw new Error('Errore caricamento');
+      const data = await res.json();
+      setProducts(data as Product[]);
+    } catch (_) {
+      setProducts([]);
+    }
   };
-  const saveProducts = (updatedProducts: Product[]) => {
-    localStorage.setItem('filamentincantati_products', JSON.stringify(updatedProducts));
-    setProducts(updatedProducts);
+  const upsertProduct = async (product: Product) => {
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        image: product.image,
+        materials: product.materials,
+        technique: product.technique,
+        price: product.price,
+        description: product.description,
+        isPublished: product.isPublished,
+      }),
+    });
+    if (!res.ok) throw new Error('Errore salvataggio');
+  };
+  const deleteProduct = async (id: string) => {
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Errore eliminazione');
   };
 
   // Upload helpers
@@ -450,19 +474,16 @@ const AdminPanel = () => {
                   
                   if (isEditingProduct && editingProductId) {
                     // Modifica prodotto esistente
-                    const updatedProducts = products.map(p => 
-                      p.id === editingProductId 
-                        ? { ...p, name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished || true }
-                        : p
-                    );
-                    saveProducts(updatedProducts);
+                    const updated: Product = { id: editingProductId, name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished ?? true, createdAt: new Date().toISOString() } as Product;
+                    await upsertProduct(updated);
+                    await loadProducts();
                     setIsEditingProduct(false);
                     setEditingProductId(null);
                   } else {
                     // Aggiungi nuovo prodotto
-                    const product: Product = { id: Date.now().toString(), name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished || true, createdAt: new Date().toISOString() };
-                    const updatedProducts = [...products, product];
-                    saveProducts(updatedProducts);
+                    const product: Product = { id: Date.now().toString(), name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished ?? true, createdAt: new Date().toISOString() };
+                    await upsertProduct(product);
+                    await loadProducts();
                   }
                   
                   setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
@@ -534,10 +555,10 @@ const AdminPanel = () => {
                     >
                       <Plus size={16} />
                     </button>
-                    <button onClick={() => { const updated = products.map(p => p.id === product.id ? { ...p, isPublished: !p.isPublished } : p); saveProducts(updated); }} className={`p-2 rounded-lg ${product.isPublished ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title={product.isPublished ? 'Nascondi' : 'Mostra'}>
+                    <button onClick={async () => { const updated = { ...product, isPublished: !product.isPublished }; await upsertProduct(updated); await loadProducts(); }} className={`p-2 rounded-lg ${product.isPublished ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title={product.isPublished ? 'Nascondi' : 'Mostra'}>
                       {product.isPublished ? 'Visibile' : 'Nascosto'}
                     </button>
-                    <button onClick={() => { if (confirm('Eliminare questo prodotto?')) { const updated = products.filter(p => p.id !== product.id); saveProducts(updated); } }} className="p-2 bg-pastel-rose-100 text-pastel-rose-600 rounded-lg hover:bg-pastel-rose-200" title="Elimina">
+                    <button onClick={async () => { if (confirm('Eliminare questo prodotto?')) { await deleteProduct(product.id); await loadProducts(); } }} className="p-2 bg-pastel-rose-100 text-pastel-rose-600 rounded-lg hover:bg-pastel-rose-200" title="Elimina">
                       <Trash2 size={16} />
                     </button>
                   </div>

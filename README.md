@@ -10,7 +10,7 @@ Sito web per la collezione di gioielli artigianali Filamentincantati, realizzato
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
 - **Backend**: Node.js + Express
-- **Database**: LocalStorage (client-side)
+- **Database**: Neon Postgres (serverless) tramite API serverless Vercel
 
 ## 📁 Struttura Progetto
 
@@ -64,6 +64,11 @@ npm run dev
 ## 🔒 Sicurezza
 
 Il progetto implementa un sistema di autenticazione a due fattori per l'accesso amministrativo. Le credenziali e le configurazioni sensibili sono gestite tramite variabili d'ambiente e non sono mai esposte nel codice sorgente.
+
+### Variabili d'Ambiente (Vercel)
+- `DATABASE_URL` → impostata automaticamente dall'integrazione Neon su Vercel (Connection string Postgres con `sslmode=require`)
+- `AUTH_SECRET` → da impostare manualmente (segreto firma token 2FA)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `SMTP_FROM` → per invio email 2FA
 
 ## 📱 Funzionalità
 

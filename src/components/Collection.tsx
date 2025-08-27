@@ -17,30 +17,33 @@ const Collection = () => {
   const [collection, setCollection] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carica prodotti dal localStorage
+  // Carica prodotti pubblicati dall'API pubblica con fallback a localStorage
   useEffect(() => {
-    const loadProducts = () => {
+    let cancelled = false;
+    const loadFromApi = async () => {
       try {
-        const savedProducts = localStorage.getItem('filamentincantati_products');
-        if (savedProducts) {
-          const parsedProducts = JSON.parse(savedProducts);
-          const publishedProducts = parsedProducts.filter((p: any) => p.isPublished);
-          setCollection(publishedProducts);
+        const res = await fetch('/api/products/public');
+        if (!res.ok) throw new Error('HTTP');
+        const data = await res.json();
+        if (!cancelled) setCollection(data);
+      } catch (_) {
+        try {
+          const savedProducts = localStorage.getItem('filamentincantati_products');
+          if (savedProducts) {
+            const parsedProducts = JSON.parse(savedProducts);
+            const publishedProducts = parsedProducts.filter((p: any) => p.isPublished);
+            if (!cancelled) setCollection(publishedProducts);
+          }
+        } catch (error) {
+          console.error('Errore nel caricamento prodotti:', error);
         }
-      } catch (error) {
-        console.error('Errore nel caricamento prodotti:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    loadProducts();
-    
-    // Ascolta i cambiamenti nel localStorage
-    const handleStorageChange = () => loadProducts();
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => window.removeEventListener('storage', handleStorageChange);
+    loadFromApi();
+    return () => { cancelled = true; };
   }, []);
 
   const filteredCollection = selectedCategory === 'tutti' 
