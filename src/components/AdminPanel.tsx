@@ -46,6 +46,9 @@ const AdminPanel = () => {
   const [newPassword, setNewPassword] = useState('');
   const [changePasswordMsg, setChangePasswordMsg] = useState('');
   const [imageError, setImageError] = useState('');
+  const SUPPORTED_IMAGE_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/jpg'
+  ];
 
   // Carica prodotti da Firestore
   const loadProducts = async () => {
@@ -130,8 +133,8 @@ const AdminPanel = () => {
       return;
     }
     const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      setImageError('Seleziona solo file immagine');
+    if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+      setImageError('Formato immagine non supportato. Usa JPG, PNG, GIF, WEBP, SVG.');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -412,10 +415,11 @@ const AdminPanel = () => {
                     setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
                     setSelectedImage(null);
                     setImagePreview('');
-                    setImageError('');
                     alert('Prodotto salvato con successo!');
-                  } catch (error) {
-                    alert('Errore nel salvataggio');
+                  } catch (error: any) {
+                    let msg = 'Errore nel salvataggio';
+                    if (error && error.message) msg += ': ' + error.message;
+                    alert(msg);
                   }
                 }} disabled={isUploading} className={`px-6 py-3 rounded-lg transition-colors ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-pastel-aqua-600 hover:bg-pastel-aqua-700 text-white'}`}>
                   {isUploading ? 'Caricamento...' : (isEditingProduct ? 'Salva Modifiche' : 'Aggiungi Prodotto')}
