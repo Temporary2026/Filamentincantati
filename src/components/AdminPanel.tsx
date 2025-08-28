@@ -1,5 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Eye, EyeOff, Plus, Trash2, X, Shield, Upload, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Eye, EyeOff, Plus, Trash2, X, Shield, Upload, Download, Cloud, RefreshCw } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from 'firebase/auth';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy } from 'firebase/firestore';
 
 interface Product {
   id: string;
@@ -14,24 +17,13 @@ interface Product {
   createdAt: string;
 }
 
-const ADMIN_EMAIL = 'liguori.daniela87@gmail.com';
+const ADMIN_EMAIL = 'liguori.daniela87@gmail.com'; // Cambia con la tua email admin registrata su Firebase
 
 const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
-  const [emailCode, setEmailCode] = useState('');
-  const [emailAuthToken, setEmailAuthToken] = useState<string | null>(null);
-  const [codeSent, setCodeSent] = useState(false);
-  const [sending, setSending] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [configWarning, setConfigWarning] = useState<string | null>(null);
-
-  // API base: allow override via VITE_API_BASE; defaults to same-origin in prod, localhost:3001 in dev
-  const API_BASE = (import.meta as any).env?.VITE_API_BASE
-    ? String((import.meta as any).env.VITE_API_BASE).replace(/\/$/, '')
-    : (import.meta.env.PROD ? '' : 'http://localhost:3001');
-
   const [products, setProducts] = useState<Product[]>([]);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isEditingProduct, setIsEditingProduct] = useState(false);
@@ -50,120 +42,84 @@ const AdminPanel = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [changePasswordMsg, setChangePasswordMsg] = useState('');
 
-  // Server persistence (Neon via API)
+  // Carica prodotti da Firestore
   const loadProducts = async () => {
     try {
-      const res = await fetch('/api/products');
-      if (!res.ok) throw new Error('Errore caricamento');
-      const data = await res.json();
-      setProducts(data as Product[]);
-    } catch (_) {
-      setProducts([]);
+      const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const products: Product[] = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        products.push({ ...(data as Product), id: docSnap.id });
+      });
+      setProducts(products);
+    } catch (error) {
+      setErrorMsg('Errore caricamento prodotti');
     }
   };
 
-  const upsertProduct = async (product: Product) => {
-    const res = await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: product.id,
-        name: product.name,
-        category: product.category,
-        image: product.image,
-        materials: product.materials,
-        technique: product.technique,
-        price: product.price,
-        description: product.description,
-        isPublished: product.isPublished,
-      }),
-    });
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || 'Errore salvataggio');
+  // Login admin con Firebase Auth
+  const handleLogin = async () => {
+    setErrorMsg('');
+    try {
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
+      setIsAuthenticated(true);
+      setPassword('');
+      await loadProducts();
+    } catch (error) {
+      setErrorMsg('Credenziali non valide');
     }
+  };
+
+  // Logout
+  const handleLogout = async () => {
+    await signOut(auth);
+    setIsAuthenticated(false);
+    setProducts([]);
+  };
+
+  // Cambia password admin
+  const handleChangePassword = async () => {
+    setChangePasswordMsg('');
+    if (newPassword.length < 8) {
+      setChangePasswordMsg('La password deve essere di almeno 8 caratteri');
+      return;
+    }
+    try {
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, newPassword);
+        setChangePasswordMsg('Password aggiornata con successo!');
+        setShowChangePassword(false);
+        setNewPassword('');
+      }
+    } catch (error) {
+      setChangePasswordMsg('Errore aggiornamento password');
+    }
+  };
+
+  // CRUD prodotti su Firestore
+  const saveProduct = async (product: Product) => {
+    if (product.id) {
+      // Update
+      const ref = doc(db, 'products', product.id);
+      await updateDoc(ref, { ...product });
+    } else {
+      // Add
+      await addDoc(collection(db, 'products'), { ...product });
+    }
+    await loadProducts();
   };
 
   const deleteProduct = async (id: string) => {
-    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Errore eliminazione');
+    await deleteDoc(doc(db, 'products', id));
+    await loadProducts();
   };
 
-  // Database-based authentication
-  const handleAdminLogin = async () => {
-    try {
-      setErrorMsg('');
-      const res = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: ADMIN_EMAIL, password })
-      });
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Login fallito');
-      }
-      
-      const data = await res.json();
-      if (data.success) {
-        setIsAuthenticated(true);
-        loadProducts();
-      }
-    } catch (error) {
-      setErrorMsg(error instanceof Error ? error.message : 'Errore di login');
-    }
-  };
-
-  // Email 2FA
-  const requestEmailCode = async () => {
-    try {
-      setSending(true);
-      setErrorMsg('');
-      setConfigWarning(null);
-      const url = `${API_BASE}/api/auth/request-code`;
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL }) });
-      if (!res.ok) throw new Error('Invio fallito');
-      const data = await res.json();
-      if (data.success) {
-        setCodeSent(true);
-        setEmailAuthToken(data.token || null);
-        if (import.meta.env.PROD && !data.token) {
-          setConfigWarning('Configurazione 2FA mancante: imposta AUTH_SECRET e SMTP_* nelle Environment Variables su Vercel.');
-        }
-      } else {
-        setErrorMsg('Impossibile inviare il codice');
-      }
-    } catch (_) {
-      setErrorMsg('Impossibile inviare il codice');
-      if (import.meta.env.PROD) {
-        setConfigWarning('Errore invio codice. Verifica AUTH_SECRET e SMTP_* su Vercel.');
-      }
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const verifyEmailCode = async () => {
-    setErrorMsg('');
-    if (emailCode.length !== 6) { setErrorMsg('Inserisci il codice ricevuto via email'); return; }
-    if (!emailAuthToken) { setErrorMsg('Token non presente. Clicca "Invia codice" e riprova.'); return; }
-    try {
-      const url = `${API_BASE}/api/auth/verify-code`;
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, code: emailCode, token: emailAuthToken }) });
-      const data = await res.json();
-      if (data.success) {
-        // After 2FA verification, proceed with admin login
-        await handleAdminLogin();
-      } else {
-        setErrorMsg('Codice non valido o scaduto');
-      }
-    } catch (_) {
-      setErrorMsg('Errore di verifica');
-    }
-  };
-
-  // Upload helpers
+  // Gestione immagini locale (solo preview, non upload su Firebase Storage)
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -171,46 +127,74 @@ const AdminPanel = () => {
       if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
       setSelectedImage(file);
       const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setImagePreview(result);
+      };
       reader.readAsDataURL(file);
     }
   };
   const triggerFileInput = () => fileInputRef.current?.click();
 
-  // UI: Login (password + email code)
+  // Auth state listener
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user && user.email === ADMIN_EMAIL) {
+        setIsAuthenticated(true);
+        loadProducts();
+      } else if (user) {
+        setIsAuthenticated(false);
+        setErrorMsg('Accesso negato: solo l\'amministratore può gestire i prodotti.');
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // UI: Login admin
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          {configWarning && (
-            <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-800 text-sm">
-              {configWarning}
-            </div>
-          )}
           <div className="text-center mb-8">
             <div className="inline-flex p-4 bg-pastel-aqua-100 rounded-full mb-4">
               <Shield className="text-pastel-aqua-600" size={32} />
             </div>
             <h1 className="text-2xl font-serif text-pastel-aqua-900 mb-2">Admin Panel</h1>
-            <p className="text-pastel-aqua-700">Accesso con password + codice email</p>
+            <p className="text-pastel-aqua-700">Accesso amministratore</p>
           </div>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-pastel-aqua-800 mb-2">Password</label>
               <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg focus:ring-2 focus:ring-pastel-aqua-500 focus:border-transparent" placeholder="Inserisci la password" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-aqua-500 hover:text-pastel-aqua-700">{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && handleLogin()}
+                  className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg focus:ring-2 focus:ring-pastel-aqua-500 focus:border-transparent" 
+                  placeholder="Inserisci la password" 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-aqua-500 hover:text-pastel-aqua-700"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-pastel-aqua-800 mb-2">Codice ricevuto via email</label>
-                <button onClick={requestEmailCode} disabled={sending} className="text-sm px-3 py-2 rounded bg-pastel-aqua-600 text-white hover:bg-pastel-aqua-700 disabled:opacity-60">{sending ? 'Invio...' : codeSent ? 'Reinvia codice' : 'Invia codice'}</button>
-              </div>
-              <input type="text" value={emailCode} onChange={e => setEmailCode(e.target.value)} className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg focus:ring-2 focus:ring-pastel-aqua-500 focus:border-transparent" placeholder="Inserisci il codice (6 cifre)" maxLength={6} />
             </div>
             {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
-            <button onClick={verifyEmailCode} className="w-full bg-pastel-aqua-600 text-white py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors">Accedi</button>
+            <button 
+              onClick={handleLogin} 
+              className="w-full bg-pastel-aqua-600 text-white py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors"
+            >
+              Accedi
+            </button>
+            {errorMsg && (
+              <button onClick={handleLogout} className="w-full mt-2 bg-pastel-rose-500 text-white py-2 rounded-lg font-semibold hover:bg-pastel-rose-600 transition-colors">Logout</button>
+            )}
           </div>
         </div>
       </div>
@@ -228,9 +212,27 @@ const AdminPanel = () => {
               <h1 className="text-3xl font-serif text-pastel-aqua-900">Gestione Collezione</h1>
               <p className="text-pastel-aqua-700">Filamentincantati - Admin Panel</p>
             </div>
-            <button onClick={() => setIsAuthenticated(false)} className="px-4 py-2 bg-pastel-rose-500 text-white rounded-lg hover:bg-pastel-rose-600 transition-colors">Logout</button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowChangePassword(true)} className="px-4 py-2 bg-pastel-sky-500 text-white rounded-lg hover:bg-pastel-sky-600 transition-colors">Cambia Password</button>
+              <button onClick={handleLogout} className="px-4 py-2 bg-pastel-rose-500 text-white rounded-lg hover:bg-pastel-rose-600 transition-colors">Logout</button>
+            </div>
           </div>
         </div>
+
+        {/* Cambia password modal */}
+        {showChangePassword && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-md">
+              <h2 className="text-xl font-serif mb-4">Cambia Password</h2>
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg mb-4" placeholder="Nuova password" />
+              {changePasswordMsg && <div className="mb-2 text-sm text-pastel-aqua-700">{changePasswordMsg}</div>}
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setShowChangePassword(false)} className="px-4 py-2 border border-pastel-aqua-300 text-pastel-aqua-700 rounded-lg">Annulla</button>
+                <button onClick={handleChangePassword} className="px-4 py-2 bg-pastel-aqua-600 text-white rounded-lg hover:bg-pastel-aqua-700">Aggiorna</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="mb-8 flex flex-wrap gap-4">
@@ -238,104 +240,26 @@ const AdminPanel = () => {
             <Plus className="mr-2" size={20} />
             Aggiungi Prodotto
           </button>
-          
-          {/* Backup Database */}
-          <button 
-            onClick={() => {
-              const dataStr = JSON.stringify(products, null, 2);
-              const dataBlob = new Blob([dataStr], { type: 'application/json' });
-              const url = URL.createObjectURL(dataBlob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `filamentincantati_products_${new Date().toISOString().split('T')[0]}.json`;
-              link.click();
-              URL.revokeObjectURL(url);
-              alert(`Database esportato con successo! Contiene ${products.length} prodotti.`);
-            }}
-            className="bg-pastel-sky-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-sky-700 transition-colors flex items-center"
-          >
-            <Download className="mr-2" size={20} />
-            Esporta Database
-          </button>
-          
-          {/* Backup Completo (Database + Immagini) */}
-          <button 
-            onClick={() => {
-              // Crea un file ZIP con database e informazioni immagini
-              const backupData = {
-                products: products,
-                images: products.map(p => ({
-                  id: p.id,
-                  name: p.name,
-                  imagePath: p.image,
-                  filename: p.image.split('/').pop()
-                })),
-                exportDate: new Date().toISOString(),
-                totalProducts: products.length
-              };
-              
-              const dataStr = JSON.stringify(backupData, null, 2);
-              const dataBlob = new Blob([dataStr], { type: 'application/json' });
-              const url = URL.createObjectURL(dataBlob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `filamentincantati_complete_backup_${new Date().toISOString().split('T')[0]}.json`;
-              link.click();
-              URL.revokeObjectURL(url);
-              
-              alert(`Backup completo esportato! Include database e riferimenti alle immagini.\n\nIMPORTANTE: Per un backup completo, copia anche la cartella /public/img/`);
-            }}
-            className="bg-pastel-aqua-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors flex items-center"
-          >
-            <Shield className="mr-2" size={20} />
-            Backup Completo
-          </button>
-          
-          {/* Import Database */}
-          <label className="bg-pastel-rose-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-rose-700 transition-colors flex items-center cursor-pointer">
-            <Upload className="mr-2" size={20} />
-            Importa Database
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (event) => {
-                    try {
-                      const importedProducts = JSON.parse(event.target?.result as string);
-                      if (Array.isArray(importedProducts)) {
-                        if (confirm(`Importare ${importedProducts.length} prodotti? Questo sostituirà i prodotti esistenti.`)) {
-                          // Import products one by one
-                          const importProducts = async () => {
-                            try {
-                              for (const product of importedProducts) {
-                                await upsertProduct(product);
-                              }
-                              await loadProducts();
-                              alert(`Importati ${importedProducts.length} prodotti con successo!`);
-                            } catch (error) {
-                              alert(`Errore durante l'import: ${error}`);
-                            }
-                          };
-                          importProducts();
-                        }
-                      } else {
-                        alert('File non valido. Deve contenere un array di prodotti.');
-                      }
-                    } catch (error) {
-                      alert('Errore nella lettura del file. Verifica che sia un JSON valido.');
-                    }
-                  };
-                  reader.readAsText(file);
-                }
-                // Reset input
-                e.target.value = '';
-              }}
-              className="hidden"
-            />
-          </label>
+        </div>
+
+        {/* Statistics */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="text-3xl font-bold text-pastel-aqua-600 mb-2">{products.length}</div>
+            <div className="text-pastel-aqua-700">Totale Prodotti</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="text-3xl font-bold text-green-600 mb-2">{products.filter(p => p.isPublished).length}</div>
+            <div className="text-green-700">Prodotti Visibili</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="text-3xl font-bold text-orange-600 mb-2">{products.filter(p => !p.isPublished).length}</div>
+            <div className="text-orange-700">Prodotti Nascosti</div>
+          </div>
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="text-3xl font-bold text-pastel-sky-600 mb-2">{new Date().toLocaleDateString('it-IT')}</div>
+            <div className="text-pastel-sky-700">Ultimo Aggiornamento</div>
+          </div>
         </div>
 
         {/* Add/Edit Product Modal */}
@@ -446,61 +370,36 @@ const AdminPanel = () => {
                     alert('Compila tutti i campi obbligatori'); 
                     return; 
                   }
-                  
                   let imagePath = newProduct.image || '';
                   if (selectedImage) {
-                    // For now, use the data URL directly (in production, you'd upload to a service)
                     imagePath = imagePreview;
                   } else if (!newProduct.image) { 
                     alert('Seleziona un\'immagine o inserisci un URL'); 
                     return; 
                   }
-                  
                   try {
-                    if (isEditingProduct && editingProductId) {
-                      // Modifica prodotto esistente
-                      const updated: Product = { 
-                        id: editingProductId, 
-                        name: newProduct.name!, 
-                        category: newProduct.category!, 
-                        image: imagePath, 
-                        materials: newProduct.materials!, 
-                        technique: newProduct.technique!, 
-                        price: newProduct.price!, 
-                        description: newProduct.description || '', 
-                        isPublished: newProduct.isPublished ?? true, 
-                        createdAt: new Date().toISOString() 
-                      } as Product;
-                      await upsertProduct(updated);
-                      await loadProducts();
-                      setIsEditingProduct(false);
-                      setEditingProductId(null);
-                    } else {
-                      // Aggiungi nuovo prodotto
-                      const product: Product = { 
-                        id: Date.now().toString(), 
-                        name: newProduct.name!, 
-                        category: newProduct.category!, 
-                        image: imagePath, 
-                        materials: newProduct.materials!, 
-                        technique: newProduct.technique!, 
-                        price: newProduct.price!, 
-                        description: newProduct.description || '', 
-                        isPublished: newProduct.isPublished ?? true, 
-                        createdAt: new Date().toISOString() 
-                      };
-                      await upsertProduct(product);
-                      await loadProducts();
-                    }
-                    
+                    const product: Product = {
+                      id: isEditingProduct && editingProductId ? editingProductId : '',
+                      name: newProduct.name!,
+                      category: newProduct.category!,
+                      image: imagePath,
+                      materials: newProduct.materials!,
+                      technique: newProduct.technique!,
+                      price: newProduct.price!,
+                      description: newProduct.description || '',
+                      isPublished: newProduct.isPublished ?? true,
+                      createdAt: new Date().toISOString()
+                    };
+                    await saveProduct(product);
+                    setIsAddingProduct(false);
+                    setIsEditingProduct(false);
+                    setEditingProductId(null);
                     setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
                     setSelectedImage(null);
                     setImagePreview('');
-                    setIsAddingProduct(false);
-                    
                     alert('Prodotto salvato con successo!');
                   } catch (error) {
-                    alert(`Errore nel salvataggio: ${error}`);
+                    alert('Errore nel salvataggio');
                   }
                 }} disabled={isUploading} className={`px-6 py-3 rounded-lg transition-colors ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-pastel-aqua-600 hover:bg-pastel-aqua-700 text-white'}`}>
                   {isUploading ? 'Caricamento...' : (isEditingProduct ? 'Salva Modifiche' : 'Aggiungi Prodotto')}
@@ -509,26 +408,6 @@ const AdminPanel = () => {
             </div>
           </div>
         )}
-
-        {/* Statistics */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-            <div className="text-3xl font-bold text-pastel-aqua-600 mb-2">{products.length}</div>
-            <div className="text-pastel-aqua-700">Totale Prodotti</div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">{products.filter(p => p.isPublished).length}</div>
-            <div className="text-green-700">Prodotti Visibili</div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-            <div className="text-3xl font-bold text-orange-600 mb-2">{products.filter(p => !p.isPublished).length}</div>
-            <div className="text-orange-700">Prodotti Nascosti</div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-            <div className="text-3xl font-bold text-pastel-sky-600 mb-2">{new Date().toLocaleDateString('it-IT')}</div>
-            <div className="text-pastel-sky-700">Ultimo Aggiornamento</div>
-          </div>
-        </div>
 
         {/* Products List */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -569,11 +448,10 @@ const AdminPanel = () => {
                     </button>
                     <button onClick={async () => { 
                       try {
-                        const updated = { ...product, isPublished: !product.isPublished }; 
-                        await upsertProduct(updated); 
-                        await loadProducts(); 
+                        const updated = { ...product, isPublished: !product.isPublished };
+                        await saveProduct(updated as Product);
                       } catch (error) {
-                        alert(`Errore nell'aggiornamento: ${error}`);
+                        alert('Errore nell\'aggiornamento');
                       }
                     }} className={`p-2 rounded-lg ${product.isPublished ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title={product.isPublished ? 'Nascondi' : 'Mostra'}>
                       {product.isPublished ? 'Visibile' : 'Nascosto'}
@@ -581,10 +459,9 @@ const AdminPanel = () => {
                     <button onClick={async () => { 
                       if (confirm('Eliminare questo prodotto?')) { 
                         try {
-                          await deleteProduct(product.id); 
-                          await loadProducts(); 
+                          await deleteProduct(product.id);
                         } catch (error) {
-                          alert(`Errore nell'eliminazione: ${error}`);
+                          alert('Errore nell\'eliminazione');
                         }
                       } 
                     }} className="p-2 bg-pastel-rose-100 text-pastel-rose-600 rounded-lg hover:bg-pastel-rose-200" title="Elimina">

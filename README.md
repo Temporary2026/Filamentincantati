@@ -1,103 +1,175 @@
-# Filamentincantati - Sito Web Gioielli Artigianali
+# Filamentincantati - Gioielli Artigianali
 
-## 🎯 Descrizione
+Un sito web moderno e responsive per la vendita di gioielli artigianali realizzati a mano, con un pannello di amministrazione integrato per la gestione dei prodotti.
 
-Sito web per la collezione di gioielli artigianali Filamentincantati, realizzato con React, TypeScript e Tailwind CSS.
+## ✨ Caratteristiche
 
-## 🚀 Tecnologie Utilizzate
+- **Design Moderno**: Interfaccia elegante con palette colori pastello
+- **Responsive**: Ottimizzato per tutti i dispositivi
+- **Pannello Admin**: Gestione completa prodotti con autenticazione locale
+- **Persistenza Dati**: Sistema localStorage avanzato con backup automatico
+- **Sincronizzazione**: Condivisione dati tra dispositivi e tab
+- **Gestione Immagini**: Upload locale con preview e ottimizzazione
+- **Filtri Avanzati**: Ricerca, categorizzazione e ordinamento prodotti
+
+## 🚀 Tecnologie
 
 - **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS
 - **Build Tool**: Vite
-- **Backend**: Node.js + Express
-- **Database**: Neon Postgres (serverless) tramite API serverless Vercel
+- **Icons**: Lucide React
+- **Storage**: localStorage con backup automatico
+- **Deployment**: Vercel (static hosting)
 
 ## 📁 Struttura Progetto
 
 ```
-src/
-├── components/          # Componenti React
-│   ├── Header.tsx      # Header del sito
-│   ├── Hero.tsx        # Sezione hero principale
-│   ├── Collection.tsx  # Vetrina prodotti
-│   ├── AllProducts.tsx # Pagina completa collezione
-│   ├── AdminPanel.tsx  # Pannello amministrativo
-│   └── ...
-├── App.tsx             # Componente principale
-└── main.tsx            # Entry point
+filamentincantati/
+├── src/
+│   ├── components/
+│   │   ├── AdminPanel.tsx      # Pannello amministrazione
+│   │   ├── AllProducts.tsx     # Pagina tutti i prodotti
+│   │   ├── Collection.tsx      # Vetrina homepage
+│   │   ├── Header.tsx          # Header sito
+│   │   ├── Hero.tsx            # Sezione hero
+│   │   └── ...                 # Altri componenti
+│   ├── App.tsx                 # App principale
+│   └── main.tsx                # Entry point
+├── public/                     # Asset statici
+├── all-products.html           # Pagina standalone prodotti
+├── controlpanel0806.html       # Pagina standalone admin
+└── index.html                  # Homepage
 ```
 
-## 🛠️ Installazione e Avvio
+## 🔧 Installazione
 
-### Prerequisiti
-- Node.js 18+ 
-- npm o yarn
+1. **Clona il repository**
+   ```bash
+   git clone [url-repository]
+   cd filamentincantati
+   ```
 
-### Setup
-```bash
-# Clona il repository
-git clone [repository-url]
-cd Filamentincantati
+2. **Installa le dipendenze**
+   ```bash
+   npm install
+   ```
 
-# Installa le dipendenze
-npm install
+3. **Avvia in sviluppo**
+   ```bash
+   npm run dev
+   ```
 
-# Avvia il server backend
-npm run server
+4. **Build per produzione**
+   ```bash
+   npm run build
+   ```
 
-# In un nuovo terminale, avvia il frontend
-npm run dev
-```
+## 🎯 Funzionalità Admin
 
-### Script Disponibili
-- `npm run dev` - Avvia il frontend in modalità sviluppo
-- `npm run server` - Avvia il server backend
-- `npm run dev:full` - Avvia entrambi contemporaneamente
-- `npm run build` - Build per produzione
+### Accesso
+- **Password**: `admin123` (configurabile nel codice)
+- **Autenticazione**: Locale, senza 2FA
+- **Sessione**: Persistente nel browser
 
-## 🌐 Accesso al Sito
+### Gestione Prodotti
+- ✅ **Aggiunta**: Nome, categoria, immagine, materiali, tecnica, prezzo
+- ✅ **Modifica**: Aggiornamento completo prodotti esistenti
+- ✅ **Eliminazione**: Rimozione sicura con conferma
+- ✅ **Pubblicazione**: Controllo visibilità prodotti
+- ✅ **Upload Immagini**: Supporto JPG, PNG, GIF (max 5MB)
 
-- **Frontend**: http://localhost:5174/
-- **Backend**: http://localhost:3001/
-- **Admin Panel**: Solo per amministratori autorizzati
+### Sistema di Backup
+- 🔄 **Backup Automatico**: Ogni 10 modifiche
+- 💾 **Esportazione**: Database JSON completo
+- 📥 **Importazione**: Ripristino da backup
+- 🔄 **Sincronizzazione**: Tra dispositivi e tab
 
-## 🔒 Sicurezza
+## 🌐 Deployment
 
-Il progetto implementa un sistema di autenticazione a due fattori per l'accesso amministrativo. Le credenziali e le configurazioni sensibili sono gestite tramite variabili d'ambiente e non sono mai esposte nel codice sorgente.
+### Vercel (Raccomandato)
+1. **Connetti repository** GitHub a Vercel
+2. **Build Command**: `npm run build`
+3. **Output Directory**: `dist`
+4. **Deploy automatico** ad ogni push
 
-### Variabili d'Ambiente (Vercel)
-- `DATABASE_URL` → impostata automaticamente dall'integrazione Neon su Vercel (Connection string Postgres con `sslmode=require`)
-- `AUTH_SECRET` → da impostare manualmente (segreto firma token 2FA)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `SMTP_FROM` → per invio email 2FA
+### Altri Hosting Statici
+- Netlify
+- GitHub Pages
+- Surge.sh
 
-## 📱 Funzionalità
+## 📱 Responsive Design
 
-### Pubblico
-- ✅ Visualizzazione collezione gioielli
-- ✅ Filtri per categoria
-- ✅ Ricerca prodotti
-- ✅ Contatti diretti WhatsApp
-- ✅ Design responsive
-
-### Amministrativo
-- ✅ Gestione prodotti completa
-- ✅ Upload immagini
-- ✅ Controllo visibilità
-- ✅ Backup e ripristino dati
-- ✅ Sistema di autenticazione sicuro
+- **Mobile First**: Ottimizzato per smartphone
+- **Tablet**: Layout adattivo intermedio
+- **Desktop**: Esperienza completa
+- **Touch Friendly**: Interfacce ottimizzate per touch
 
 ## 🎨 Personalizzazione
 
-Il sito utilizza un sistema di colori personalizzato basato su palette pastel. I colori principali sono definiti in `tailwind.config.js` e possono essere facilmente modificati.
+### Colori
+Il progetto usa una palette personalizzata definita in `tailwind.config.js`:
+- `pastel-aqua`: Colori principali
+- `pastel-sky`: Accenti
+- `pastel-rose`: Evidenziazioni
+
+### Componenti
+Tutti i componenti sono modulari e facilmente personalizzabili tramite props e CSS classes.
+
+## 🔒 Sicurezza
+
+- **Admin Panel**: Accesso protetto da password
+- **Validazione Input**: Controlli sui dati inseriti
+- **Sanitizzazione**: Prevenzione XSS e injection
+- **Local Storage**: Dati salvati localmente, non inviati a server esterni
+
+## 📊 Performance
+
+- **Lazy Loading**: Caricamento ottimizzato immagini
+- **Code Splitting**: Bundle separati per pagine
+- **Optimization**: Build ottimizzato per produzione
+- **Caching**: localStorage per dati frequenti
+
+## 🛠️ Sviluppo
+
+### Script Disponibili
+- `npm run dev`: Server sviluppo
+- `npm run build`: Build produzione
+- `npm run lint`: Controllo codice
+- `npm run preview`: Anteprima build
+
+### Struttura Componenti
+Ogni componente segue le best practices React:
+- Hooks personalizzati per logica
+- Props tipizzate con TypeScript
+- Styling con Tailwind CSS
+- Gestione stato locale
+
+## 📝 Note
+
+- **Compatibilità**: Chrome 90+, Firefox 88+, Safari 14+
+- **Storage**: Richiede localStorage abilitato
+- **Immagini**: Supporto per formati comuni web
+- **Backup**: Salvataggio automatico ogni 10 modifiche
+
+## 🤝 Contributi
+
+1. Fork del progetto
+2. Crea branch feature (`git checkout -b feature/AmazingFeature`)
+3. Commit modifiche (`git commit -m 'Add AmazingFeature'`)
+4. Push al branch (`git push origin feature/AmazingFeature`)
+5. Apri Pull Request
 
 ## 📄 Licenza
 
-Progetto privato per Filamentincantati. Tutti i diritti riservati.
+Questo progetto è sotto licenza MIT. Vedi il file `LICENSE` per dettagli.
 
 ## 📞 Supporto
 
-Per supporto tecnico o domande, contattare l'amministratore del sistema.
+Per domande o supporto:
+- 📧 Email: [email]
+- 💬 Issues: GitHub Issues
+- 📖 Documentazione: Questo README
 
 ---
 
-**⚠️ IMPORTANTE**: Questo repository contiene solo il codice sorgente pubblico. Le configurazioni sensibili, credenziali e dati amministrativi sono gestiti separatamente e non sono mai committati su GitHub.
+**Filamentincantati** - Dove l'artigianato incontra la tecnologia ✨

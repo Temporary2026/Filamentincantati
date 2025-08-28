@@ -9,6 +9,8 @@ import Purchase from './components/Purchase';
 import Footer from './components/Footer';
 import AllProducts from './components/AllProducts';
 import AdminPanel from './components/AdminPanel';
+import UserAuth from './components/UserAuth';
+import CookieBanner from './components/CookieBanner';
 
 function App() {
   const RouterImpl = import.meta.env.PROD ? HashRouter : BrowserRouter;
@@ -18,9 +20,11 @@ function App() {
         <Route path="/" element={
           <div className="min-h-screen">
             <Header />
+            <CookieBanner />
             <Hero />
             <WhyHandmade />
             <Collection />
+            <UserAuth />
             <Artisan />
             <Purchase />
             <Footer />

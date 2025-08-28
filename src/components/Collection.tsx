@@ -1,226 +1,154 @@
-import { useState, useEffect } from 'react';
-import { Eye, Heart, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight } from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  category: 'orecchini' | 'collane' | 'bracciali';
+  image: string;
+  materials: string;
+  technique: string;
+  price: string;
+  description?: string;
+  isPublished: boolean;
+  createdAt: string;
+}
 
 const Collection = () => {
-  const [selectedCategory, setSelectedCategory] = useState('tutti');
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
-
-  const categories = [
-    { id: 'tutti', name: 'Tutti i Pezzi' },
-    { id: 'orecchini', name: 'Orecchini' },
-    { id: 'collane', name: 'Collane' },
-    { id: 'bracciali', name: 'Bracciali' }
-  ];
-
-  // La vetrina principale ora carica dinamicamente i prodotti dal database
-  // Non ci sono più prodotti hardcoded di esempio
-  const [collection, setCollection] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carica prodotti pubblicati dall'API pubblica con fallback a localStorage
+  // Carica prodotti dal localStorage
   useEffect(() => {
-    let cancelled = false;
-    const loadFromApi = async () => {
-      try {
-        const res = await fetch('/api/products/public');
-        if (!res.ok) throw new Error('HTTP');
-        const data = await res.json();
-        if (!cancelled) setCollection(data);
-      } catch (_) {
+    try {
+      // Prova prima il nuovo formato
+      const savedProducts = localStorage.getItem('filamentincantati_products_v2');
+      if (savedProducts) {
+        const parsedProducts = JSON.parse(savedProducts);
+        const publishedProducts = parsedProducts.filter((p: Product) => p.isPublished);
+        setProducts(publishedProducts);
+        setLoading(false);
+        return;
+      }
+      
+      // Fallback al vecchio formato
+      const oldProducts = localStorage.getItem('filamentincantati_products');
+      if (oldProducts) {
+        const parsedOld = JSON.parse(oldProducts);
+        const publishedProducts = parsedOld.filter((p: Product) => p.isPublished);
+        setProducts(publishedProducts);
+        setLoading(false);
+        return;
+      }
+      
+      // Nessun prodotto trovato
+      setProducts([]);
+      setLoading(false);
+    } catch (error) {
+      console.error('Errore caricamento prodotti:', error);
+      setProducts([]);
+      setLoading(false);
+    }
+  }, []);
+
+  // Ascolta cambiamenti nel localStorage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'filamentincantati_products_v2' && e.newValue) {
         try {
-          const savedProducts = localStorage.getItem('filamentincantati_products');
-          if (savedProducts) {
-            const parsedProducts = JSON.parse(savedProducts);
-            const publishedProducts = parsedProducts.filter((p: any) => p.isPublished);
-            if (!cancelled) setCollection(publishedProducts);
-          }
+          const newProducts = JSON.parse(e.newValue);
+          const publishedProducts = newProducts.filter((p: Product) => p.isPublished);
+          setProducts(publishedProducts);
         } catch (error) {
-          console.error('Errore nel caricamento prodotti:', error);
+          console.error('Errore sincronizzazione prodotti:', error);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     };
 
-    loadFromApi();
-    return () => { cancelled = true; };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const filteredCollection = selectedCategory === 'tutti' 
-    ? collection 
-    : collection.filter(item => item.category === selectedCategory);
+  if (loading) {
+    return (
+      <div className="py-16 bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pastel-aqua-600 mx-auto mb-4"></div>
+            <p className="text-pastel-aqua-700">Caricamento collezione...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const featuredProducts = products.slice(0, 6);
 
   return (
-    <section id="collezione" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl lg:text-5xl font-serif text-pastel-aqua-900 mb-6">
-            La Collezione
-          </h2>
-          <p className="text-xl text-pastel-aqua-700 leading-relaxed max-w-3xl mx-auto mb-8">
-            Dove la tradizione incontra la creatività. Ogni pezzo nasce dalla selezione di materiali pregiati 
-            e dall'applicazione di tecniche artigianali tramandate nel tempo.
+    <section className="py-16 bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-serif text-pastel-aqua-900 mb-4">La Nostra Collezione</h2>
+          <p className="text-xl text-pastel-aqua-700 max-w-2xl mx-auto">
+            Scopri la bellezza artigianale dei nostri gioielli, creati con passione e materiali di qualità
           </p>
-
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === category.id
-                    ? 'bg-pastel-aqua-600 text-white shadow-lg'
-                    : 'bg-pastel-sky-100 text-pastel-aqua-800 hover:bg-pastel-sky-200'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Materials & Techniques Info */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div className="bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100 p-8 rounded-2xl">
-            <h3 className="text-2xl font-serif text-pastel-aqua-900 mb-4 flex items-center">
-              <Sparkles className="mr-3 text-pastel-aqua-600" size={28} />
-              Materiali Selezionati
-            </h3>
-            <ul className="space-y-3 text-pastel-aqua-800">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Filati di cotone cerato premium
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Perle di vetro veneziane autentiche
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Ottone nickel-free per pelli sensibili
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-aqua-600 rounded-full mr-3"></div>
-                Pietre naturali certificate
-              </li>
-            </ul>
-            <p className="text-pastel-aqua-700 mt-4 italic">
-              "Niente plastica o materiali low-cost: solo elementi durevoli e sicuri."
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100 p-8 rounded-2xl">
-            <h3 className="text-2xl font-serif text-pastel-aqua-900 mb-4 flex items-center">
-              <Heart className="mr-3 text-pastel-red-500" size={28} />
-              Tecniche Artigianali
-            </h3>
-            <ul className="space-y-3 text-pastel-aqua-800">
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Micro-macramè tradizionale
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Lavorazione a spiga manuale
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Avvolgimento artistico a mano
-              </li>
-              <li className="flex items-center">
-                <div className="w-2 h-2 bg-pastel-red-500 rounded-full mr-3"></div>
-                Intreccio etnico contemporaneo
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Collection Grid */}
-        {loading ? (
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pastel-aqua-600 mx-auto mb-4"></div>
-            <p className="text-pastel-aqua-700 text-lg">Caricamento collezione...</p>
-          </div>
-        ) : filteredCollection.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
-              <div className="text-pastel-aqua-400 mb-4">
-                <Sparkles size={64} className="mx-auto" />
-              </div>
-              <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Nessun prodotto disponibile</h3>
-              <p className="text-pastel-aqua-700 mb-6">
-                La collezione sarà presto disponibile. Controlla più tardi!
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCollection.map((item) => (
-            <div
-              key={item.id}
-              className="group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
-            >
-              <div className="relative overflow-hidden">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
-                {hoveredItem === item.id && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex space-x-4">
-                      <button className="p-3 bg-white/90 rounded-full hover:bg-white transition-colors">
-                        <Eye size={20} className="text-pastel-aqua-800" />
-                      </button>
-                      <button className="p-3 bg-white/90 rounded-full hover:bg-white transition-colors">
-                        <Heart size={20} className="text-pastel-red-500" />
-                      </button>
-                    </div>
+        {featuredProducts.length > 0 ? (
+          <>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              {featuredProducts.map((product) => (
+                <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  <div className="aspect-square overflow-hidden">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                )}
-              </div>
-
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-serif text-pastel-aqua-900">{item.name}</h3>
-                  <span className="text-2xl font-bold text-pastel-aqua-700">{item.price}</span>
+                  <div className="p-6">
+                    <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">{product.name}</h3>
+                    <p className="text-pastel-aqua-700 mb-3 capitalize">{product.category}</p>
+                    <p className="text-lg font-semibold text-pastel-aqua-600 mb-3">{product.price}</p>
+                    <div className="text-sm text-pastel-aqua-600 space-y-1">
+                      <p><strong>Materiali:</strong> {product.materials}</p>
+                      <p><strong>Tecnica:</strong> {product.technique}</p>
+                    </div>
+                    {product.description && (
+                      <p className="text-pastel-aqua-700 mt-3 text-sm">{product.description}</p>
+                    )}
+                  </div>
                 </div>
-                
-                <div className="space-y-2 text-sm text-pastel-aqua-700">
-                  <p><strong>Materiali:</strong> {item.materials}</p>
-                  <p><strong>Tecnica:</strong> {item.technique}</p>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="bg-pastel-sky-100 text-pastel-aqua-800 px-3 py-1 rounded-full text-xs font-medium">
-                    Pezzo Unico
-                  </span>
-                  <button className="text-pastel-aqua-600 hover:text-pastel-aqua-800 font-medium text-sm transition-colors">
-                    Scopri di più →
-                  </button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+
+            <div className="text-center">
+              <a 
+                href="/all-products.html" 
+                className="inline-flex items-center bg-pastel-aqua-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors text-lg"
+              >
+                Vedi tutta la collezione
+                <ArrowRight className="ml-2" size={20} />
+              </a>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto">
+              <div className="text-6xl mb-4">✨</div>
+              <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Collezione in preparazione</h3>
+              <p className="text-pastel-aqua-700 mb-4">
+                I nostri artigiani stanno creando nuovi gioielli meravigliosi. Torna presto per scoprirli!
+              </p>
+              <a 
+                href="/controlpanel0806.html" 
+                className="inline-flex items-center bg-pastel-aqua-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors"
+              >
+                Admin Panel
+              </a>
+            </div>
           </div>
         )}
-
-        <div className="text-center mt-12">
-          <p className="text-pastel-aqua-700 italic text-lg mb-8">
-            Ogni collezione è limitata e numerata. Non troverai mai due pezzi identici.
-          </p>
-          <a
-            href="/all-products.html"
-            className="inline-flex items-center px-8 py-4 bg-pastel-aqua-600 text-white font-bold rounded-full hover:bg-pastel-aqua-700 transition-all duration-300 hover:scale-105 shadow-lg"
-          >
-            Vedi tutta la collezione →
-          </a>
-        </div>
       </div>
     </section>
   );

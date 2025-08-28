@@ -1,0 +1,59 @@
+# Filamentincantati - Variabili d'Ambiente
+# Questo file contiene esempi delle variabili d'ambiente utilizzate nel progetto
+
+# ========================================
+# CONFIGURAZIONE BASE
+# ========================================
+
+# Nome del progetto
+PROJECT_NAME=Filamentincantati
+
+# Ambiente di esecuzione
+NODE_ENV=production
+
+# ========================================
+# CONFIGURAZIONE APPLICAZIONE
+# ========================================
+
+# Porta del server di sviluppo (solo per sviluppo locale)
+PORT=5173
+
+# URL base dell'applicazione
+BASE_URL=https://tuodominio.vercel.app
+
+# ========================================
+# CONFIGURAZIONE FIREBASE (OBBLIGATORIO)
+# Ottieni questi dati dalla console Firebase -> Impostazioni progetto
+VITE_FIREBASE_API_KEY=xxxx
+VITE_FIREBASE_AUTH_DOMAIN=xxxx.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=xxxx
+VITE_FIREBASE_STORAGE_BUCKET=xxxx.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=xxxx
+VITE_FIREBASE_APP_ID=xxxx
+
+# ========================================
+# CONFIGURAZIONE BUILD
+# ========================================
+
+# Comando di build per Vercel
+BUILD_COMMAND=npm run build
+
+# Directory di output per Vercel
+OUTPUT_DIRECTORY=dist
+
+# ========================================
+# NOTE IMPORTANTI
+# ========================================
+
+# Per modificare la password admin, ora si usa Firebase Auth
+
+# ========================================
+# DEPLOYMENT
+# ========================================
+
+# Vercel: Nessuna configurazione speciale richiesta
+# Il progetto si deploya automaticamente come sito statico
+
+# Altri hosting statici: Copiare la cartella 'dist' dopo il build
+
+
