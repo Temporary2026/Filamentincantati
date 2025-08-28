@@ -19,6 +19,7 @@ interface Product {
 const Collection = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,11 +33,16 @@ const Collection = () => {
         const prods: Product[] = [];
         querySnapshot.forEach((docSnap) => {
           const data = docSnap.data();
+          // DEBUG: logga valore e tipo di isPublished
+          console.log('Prodotto:', data.name, 'isPublished:', data.isPublished, typeof data.isPublished);
           prods.push({ ...(data as Product), id: docSnap.id });
         });
         setProducts(prods);
-      } catch (error) {
+        setError(null);
+      } catch (err: any) {
         setProducts([]);
+        setError('Errore Firestore: ' + (err.message || String(err)));
+        console.error('Firestore error:', err);
       } finally {
         setLoading(false);
       }
@@ -69,6 +75,8 @@ const Collection = () => {
           </p>
         </div>
 
+        {error && <div className="text-red-600 text-center mb-4">{error}</div>}
+
         {featuredProducts.length > 0 ? (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
@@ -88,6 +96,8 @@ const Collection = () => {
                     <div className="text-sm text-pastel-aqua-600 space-y-1">
                       <p><strong>Materiali:</strong> {product.materials}</p>
                       <p><strong>Tecnica:</strong> {product.technique}</p>
+                      {/* DEBUG: mostra tipo e valore isPublished */}
+                      <p className="text-xs text-red-500">isPublished: {String(product.isPublished)} ({typeof product.isPublished})</p>
                     </div>
                     {product.description && (
                       <p className="text-pastel-aqua-700 mt-3 text-sm">{product.description}</p>
@@ -108,15 +118,18 @@ const Collection = () => {
             </div>
           </>
         ) : (
-          <div className="text-center py-12">
-            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto">
-              <div className="text-6xl mb-4">✨</div>
-              <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Collezione in preparazione</h3>
-              <p className="text-pastel-aqua-700 mb-4">
-                I nostri artigiani stanno creando nuovi gioielli meravigliosi. Torna presto per scoprirli!
-              </p>
+          featuredProducts.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto">
+                <div className="text-6xl mb-4">✨</div>
+                <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Collezione in preparazione</h3>
+                <p className="text-pastel-aqua-700 mb-4">
+                  I nostri artigiani stanno creando nuovi gioielli meravigliosi. Torna presto per scoprirli!
+                </p>
+                <p className="text-xs text-red-500 mt-2">DEBUG: Nessun prodotto trovato. Controlla che i prodotti abbiano <b>isPublished: true</b> (booleano) su Firestore.</p>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </section>

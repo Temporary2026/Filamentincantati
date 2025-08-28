@@ -24,6 +24,7 @@ const AllProducts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,13 +38,18 @@ const AllProducts = () => {
         const prods: Product[] = [];
         querySnapshot.forEach((docSnap) => {
           const data = docSnap.data();
+          // DEBUG: logga valore e tipo di isPublished
+          console.log('Prodotto:', data.name, 'isPublished:', data.isPublished, typeof data.isPublished);
           prods.push({ ...(data as Product), id: docSnap.id });
         });
         setProducts(prods);
         setFilteredProducts(prods);
-      } catch (error) {
+        setError(null);
+      } catch (err: any) {
         setProducts([]);
         setFilteredProducts([]);
+        setError('Errore Firestore: ' + (err.message || String(err)));
+        console.error('Firestore error:', err);
       } finally {
         setLoading(false);
       }
@@ -198,6 +204,7 @@ const AllProducts = () => {
         </div>
 
         {/* Griglia Prodotti */}
+        {error && <div className="text-red-600 text-center mb-4">{error}</div>}
         {filteredProducts.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
@@ -230,16 +237,15 @@ const AllProducts = () => {
                     <h3 className="text-lg font-serif text-pastel-aqua-900 leading-tight">{product.name}</h3>
                     <span className="text-xl font-bold text-pastel-aqua-600">{product.price}</span>
                   </div>
-                  
                   <div className="space-y-2 text-sm text-pastel-aqua-700 mb-4">
                     <p><strong>Materiali:</strong> {product.materials}</p>
                     <p><strong>Tecnica:</strong> {product.technique}</p>
+                    {/* DEBUG: mostra tipo e valore isPublished */}
+                    <p className="text-xs text-red-500">isPublished: {String(product.isPublished)} ({typeof product.isPublished})</p>
                   </div>
-
                   {product.description && (
                     <p className="text-pastel-aqua-600 text-sm mb-4 line-clamp-2">{product.description}</p>
                   )}
-
                   <div className="flex items-center justify-between">
                     <span className="bg-pastel-sky-100 text-pastel-aqua-800 px-3 py-1 rounded-full text-xs font-medium capitalize">
                       {product.category}
@@ -253,15 +259,18 @@ const AllProducts = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Nessun prodotto trovato</h3>
-              <p className="text-pastel-aqua-700 mb-6">
-                Prova a modificare i filtri di ricerca o torna più tardi.
-              </p>
+          filteredProducts.length === 0 && !loading && (
+            <div className="text-center py-16">
+              <div className="bg-white rounded-2xl shadow-lg p-12 max-w-md mx-auto">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Nessun prodotto trovato</h3>
+                <p className="text-pastel-aqua-700 mb-6">
+                  Prova a modificare i filtri di ricerca o torna più tardi.
+                </p>
+                <p className="text-xs text-red-500 mt-2">DEBUG: Nessun prodotto trovato. Controlla che i prodotti abbiano <b>isPublished: true</b> (booleano) su Firestore.</p>
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* Footer */}

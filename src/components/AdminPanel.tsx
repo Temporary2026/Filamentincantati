@@ -58,6 +58,8 @@ const AdminPanel = () => {
       const products: Product[] = [];
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
+        // DEBUG: logga valore e tipo di isPublished
+        console.log('Prodotto:', data.name, 'isPublished:', data.isPublished, typeof data.isPublished);
         products.push({ ...(data as Product), id: docSnap.id });
       });
       setProducts(products);
@@ -405,7 +407,7 @@ const AdminPanel = () => {
                       technique: newProduct.technique!,
                       price: newProduct.price!,
                       description: newProduct.description || '',
-                      isPublished: newProduct.isPublished ?? true,
+                      isPublished: Boolean(newProduct.isPublished),
                       createdAt: new Date().toISOString()
                     };
                     await saveProduct(product);
@@ -442,6 +444,8 @@ const AdminPanel = () => {
                       <h3 className="text-lg font-semibold text-pastel-aqua-900">{product.name}</h3>
                       <p className="text-pastel-aqua-700">{product.category}</p>
                       <p className="text-pastel-aqua-600 font-semibold">{product.price}</p>
+                      {/* DEBUG: mostra tipo e valore isPublished */}
+                      <p className="text-xs text-red-500">isPublished: {String(product.isPublished)} ({typeof product.isPublished})</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -493,7 +497,12 @@ const AdminPanel = () => {
               </div>
             ))}
           </div>
-          {products.length === 0 && (<div className="text-center py-12 text-pastel-aqua-700"><p>Nessun prodotto aggiunto. Clicca "Aggiungi Prodotto" per iniziare.</p></div>)}
+          {products.length === 0 && (
+            <div className="text-center py-12 text-pastel-aqua-700">
+              <p>Nessun prodotto aggiunto. Clicca "Aggiungi Prodotto" per iniziare.</p>
+              <p className="text-xs text-red-500 mt-2">DEBUG: Nessun prodotto trovato. Controlla che i prodotti abbiano <b>isPublished: true</b> (booleano) su Firestore.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
