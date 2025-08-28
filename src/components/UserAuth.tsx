@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, doc, setDoc } from 'firebase/firestore';
 
 const UserAuth = () => {
@@ -14,6 +14,14 @@ const UserAuth = () => {
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsub();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,6 +59,21 @@ const UserAuth = () => {
       setErrorMsg(error.message || 'Errore login');
     }
   };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null);
+    setSuccessMsg('Logout effettuato!');
+  };
+
+  if (user) {
+    return (
+      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-8 mt-12 text-center">
+        <h2 className="text-2xl font-serif text-pastel-aqua-900 mb-6">Benvenuto, {user.email}</h2>
+        <button onClick={handleLogout} className="bg-pastel-rose-500 hover:bg-pastel-rose-600 text-white px-6 py-3 rounded-lg font-semibold">Logout</button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-8 mt-12">

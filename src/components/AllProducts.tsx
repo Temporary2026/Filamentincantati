@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Filter, Search, Eye, Heart, ShoppingBag } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 interface Product {
   id: string;
@@ -23,72 +25,38 @@ const AllProducts = () => {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'date'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Carica prodotti dal localStorage
   useEffect(() => {
-    try {
-      // Prova prima il nuovo formato
-      const savedProducts = localStorage.getItem('filamentincantati_products_v2');
-      if (savedProducts) {
-        const parsedProducts = JSON.parse(savedProducts);
-        const publishedProducts = parsedProducts.filter((p: Product) => p.isPublished);
-        setProducts(publishedProducts);
-        setFilteredProducts(publishedProducts);
+    const fetchProducts = async () => {
+      try {
+        const q = query(
+          collection(db, 'products'),
+          where('isPublished', '==', true),
+          orderBy('createdAt', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const prods: Product[] = [];
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          prods.push({ ...(data as Product), id: docSnap.id });
+        });
+        setProducts(prods);
+        setFilteredProducts(prods);
+      } catch (error) {
+        setProducts([]);
+        setFilteredProducts([]);
+      } finally {
         setLoading(false);
-        return;
-      }
-      
-      // Fallback al vecchio formato
-      const oldProducts = localStorage.getItem('filamentincantati_products');
-      if (oldProducts) {
-        const parsedOld = JSON.parse(oldProducts);
-        const publishedProducts = parsedOld.filter((p: Product) => p.isPublished);
-        setProducts(publishedProducts);
-        setFilteredProducts(publishedProducts);
-        setLoading(false);
-        return;
-      }
-      
-      // Nessun prodotto trovato
-      setProducts([]);
-      setFilteredProducts([]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Errore caricamento prodotti:', error);
-      setProducts([]);
-      setFilteredProducts([]);
-      setLoading(false);
-    }
-  }, []);
-
-  // Ascolta cambiamenti nel localStorage
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'filamentincantati_products_v2' && e.newValue) {
-        try {
-          const newProducts = JSON.parse(e.newValue);
-          const publishedProducts = newProducts.filter((p: Product) => p.isPublished);
-          setProducts(publishedProducts);
-          setFilteredProducts(publishedProducts);
-        } catch (error) {
-          console.error('Errore sincronizzazione prodotti:', error);
-        }
       }
     };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    fetchProducts();
   }, []);
 
   // Filtra e ordina prodotti
   useEffect(() => {
     let filtered = products;
-
-    // Filtro per categoria
     if (selectedCategory !== 'tutti') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
-
-    // Filtro per ricerca
     if (searchTerm) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,11 +65,8 @@ const AllProducts = () => {
         product.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Ordinamento
     filtered.sort((a, b) => {
       let aValue: any, bValue: any;
-      
       switch (sortBy) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -117,14 +82,12 @@ const AllProducts = () => {
           bValue = new Date(b.createdAt);
           break;
       }
-
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
         return aValue < bValue ? 1 : -1;
       }
     });
-
     setFilteredProducts(filtered);
   }, [products, selectedCategory, searchTerm, sortBy, sortOrder]);
 
@@ -246,8 +209,7 @@ const AllProducts = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                  
-                  {/* Overlay azioni */}
+                  {/* Overlay azioni (solo icone, nessun link admin) */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex space-x-3">
                       <button className="p-3 bg-white/90 rounded-full hover:bg-white transition-colors shadow-lg">
@@ -296,14 +258,8 @@ const AllProducts = () => {
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-serif text-pastel-aqua-900 mb-2">Nessun prodotto trovato</h3>
               <p className="text-pastel-aqua-700 mb-6">
-                Prova a modificare i filtri di ricerca o aggiungi nuovi prodotti dall'admin panel.
+                Prova a modificare i filtri di ricerca o torna più tardi.
               </p>
-              <a
-                href="/controlpanel0806.html"
-                className="inline-flex items-center bg-pastel-aqua-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors"
-              >
-                Admin Panel
-              </a>
             </div>
           </div>
         )}
