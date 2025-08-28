@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 interface Product {
   id: string;
@@ -18,55 +20,28 @@ const Collection = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Carica prodotti dal localStorage
   useEffect(() => {
-    try {
-      // Prova prima il nuovo formato
-      const savedProducts = localStorage.getItem('filamentincantati_products_v2');
-      if (savedProducts) {
-        const parsedProducts = JSON.parse(savedProducts);
-        const publishedProducts = parsedProducts.filter((p: Product) => p.isPublished);
-        setProducts(publishedProducts);
+    const fetchProducts = async () => {
+      try {
+        const q = query(
+          collection(db, 'products'),
+          where('isPublished', '==', true),
+          orderBy('createdAt', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const prods: Product[] = [];
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          prods.push({ ...(data as Product), id: docSnap.id });
+        });
+        setProducts(prods);
+      } catch (error) {
+        setProducts([]);
+      } finally {
         setLoading(false);
-        return;
-      }
-      
-      // Fallback al vecchio formato
-      const oldProducts = localStorage.getItem('filamentincantati_products');
-      if (oldProducts) {
-        const parsedOld = JSON.parse(oldProducts);
-        const publishedProducts = parsedOld.filter((p: Product) => p.isPublished);
-        setProducts(publishedProducts);
-        setLoading(false);
-        return;
-      }
-      
-      // Nessun prodotto trovato
-      setProducts([]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Errore caricamento prodotti:', error);
-      setProducts([]);
-      setLoading(false);
-    }
-  }, []);
-
-  // Ascolta cambiamenti nel localStorage
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'filamentincantati_products_v2' && e.newValue) {
-        try {
-          const newProducts = JSON.parse(e.newValue);
-          const publishedProducts = newProducts.filter((p: Product) => p.isPublished);
-          setProducts(publishedProducts);
-        } catch (error) {
-          console.error('Errore sincronizzazione prodotti:', error);
-        }
       }
     };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    fetchProducts();
   }, []);
 
   if (loading) {
@@ -85,7 +60,7 @@ const Collection = () => {
   const featuredProducts = products.slice(0, 6);
 
   return (
-    <section className="py-16 bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100">
+    <section className="py-16 bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100" id="collezione">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-serif text-pastel-aqua-900 mb-4">La Nostra Collezione</h2>

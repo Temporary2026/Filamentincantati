@@ -23,7 +23,7 @@ const Header = () => {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="#collezione" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Collezione</a>
+            <a href="/all-products.html" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Collezione</a>
             <a href="#artigiana" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">L'Artigiana</a>
             <a href="#acquista" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Acquista</a>
             <a href="#contatti" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Contatti</a>
@@ -47,7 +47,7 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-pastel-aqua-100">
             <nav className="flex flex-col space-y-4">
-              <a href="#collezione" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Collezione</a>
+              <a href="/all-products.html" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Collezione</a>
               <a href="#artigiana" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">L'Artigiana</a>
               <a href="#acquista" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Acquista</a>
               <a href="#contatti" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Contatti</a>

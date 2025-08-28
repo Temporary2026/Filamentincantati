@@ -35,7 +35,7 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="#collezione"
+                href="/all-products.html"
                 className="inline-flex items-center justify-center px-8 py-4 bg-pastel-rose-400 text-white font-semibold rounded-full hover:bg-pastel-rose-500 transition-all duration-300 hover:shadow-pastel-lg hover:scale-105"
               >
                 Sfoglia la Collezione
