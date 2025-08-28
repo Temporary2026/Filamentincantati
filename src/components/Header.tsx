@@ -2,7 +2,7 @@ import React from 'react';
 import { Menu, X, Phone } from 'lucide-react';
 
 const isHome = typeof window !== 'undefined' ? window.location.pathname === '/' || window.location.pathname.endsWith('index.html') : true;
-const anchorHref = (hash: string) => isHome ? `#${hash}` : `/index.html#${hash}`;
+const anchorHref = (hash: string) => isHome ? `#${hash}` : `/${hash}.html`;
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);

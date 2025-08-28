@@ -1,7 +1,7 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 
 const isHome = typeof window !== 'undefined' ? window.location.pathname === '/' || window.location.pathname.endsWith('index.html') : true;
-const anchorHref = (hash: string) => isHome ? `#${hash}` : `/index.html#${hash}`;
+const anchorHref = (hash: string) => isHome ? `#${hash}` : `/${hash}.html`;
 
 const Hero = () => {
   return (

@@ -140,12 +140,6 @@ const Collection = () => {
               <p className="text-pastel-aqua-700 mb-4">
                 I nostri artigiani stanno creando nuovi gioielli meravigliosi. Torna presto per scoprirli!
               </p>
-              <a 
-                href="/controlpanel0806.html" 
-                className="inline-flex items-center bg-pastel-aqua-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors"
-              >
-                Admin Panel
-              </a>
             </div>
           </div>
         )}
