@@ -30,25 +30,31 @@ const AllProducts = () => {
     { id: 'anelli', name: 'Anelli' }
   ];
 
-  // Carica prodotti dal localStorage
+  // Carica prodotti pubblicati dall'API pubblica
   useEffect(() => {
-    const loadProducts = () => {
+    let cancelled = false;
+    const loadFromApi = async () => {
       try {
-        const savedProducts = localStorage.getItem('filamentincantati_products');
-        if (savedProducts) {
-          const parsedProducts = JSON.parse(savedProducts);
-          const publishedProducts = parsedProducts.filter((p: Product) => p.isPublished);
-          setProducts(publishedProducts);
-          setFilteredProducts(publishedProducts);
+        const res = await fetch('/api/products/public');
+        if (!res.ok) throw new Error('HTTP');
+        const data = await res.json();
+        if (!cancelled) {
+          setProducts(data);
+          setFilteredProducts(data);
         }
       } catch (error) {
         console.error('Errore nel caricamento prodotti:', error);
+        if (!cancelled) {
+          setProducts([]);
+          setFilteredProducts([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    loadProducts();
+    loadFromApi();
+    return () => { cancelled = true; };
   }, []);
 
   // Filtra prodotti in base a categoria e ricerca

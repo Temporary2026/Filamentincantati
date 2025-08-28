@@ -14,7 +14,6 @@ interface Product {
   createdAt: string;
 }
 
-const PASSWORD_KEY = 'filamentincantati_admin_password';
 const ADMIN_EMAIL = 'liguori.daniela87@gmail.com';
 
 const AdminPanel = () => {
@@ -52,18 +51,6 @@ const AdminPanel = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Primo accesso: setup password
-  const [isFirstAccess, setIsFirstAccess] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    const savedPassword = localStorage.getItem(PASSWORD_KEY);
-    setIsFirstAccess(!savedPassword);
-  }, []);
-
   // Server persistence (Neon via API)
   const loadProducts = async () => {
     try {
@@ -75,6 +62,7 @@ const AdminPanel = () => {
       setProducts([]);
     }
   };
+
   const upsertProduct = async (product: Product) => {
     const res = await fetch('/api/products', {
       method: 'POST',
@@ -91,38 +79,40 @@ const AdminPanel = () => {
         isPublished: product.isPublished,
       }),
     });
-    if (!res.ok) throw new Error('Errore salvataggio');
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || 'Errore salvataggio');
+    }
   };
+
   const deleteProduct = async (id: string) => {
     const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Errore eliminazione');
   };
 
-  // Upload helpers
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) { alert('Seleziona solo file immagine'); return; }
-      if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
+  // Database-based authentication
+  const handleAdminLogin = async () => {
+    try {
+      setErrorMsg('');
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: ADMIN_EMAIL, password })
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Login fallito');
+      }
+      
+      const data = await res.json();
+      if (data.success) {
+        setIsAuthenticated(true);
+        loadProducts();
+      }
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Errore di login');
     }
-  };
-  const triggerFileInput = () => fileInputRef.current?.click();
-
-  // Password setup
-  const handleSetPassword = () => {
-    setErrorMsg('');
-    if (newPassword.length < 8) { setErrorMsg('La password deve essere di almeno 8 caratteri'); return; }
-    if (newPassword !== confirmPassword) { setErrorMsg('Le password non coincidono'); return; }
-    localStorage.setItem(PASSWORD_KEY, newPassword);
-    setIsFirstAccess(false);
-    setPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    alert('Password impostata con successo! Ora effettua il login.');
   };
 
   // Email 2FA
@@ -156,8 +146,6 @@ const AdminPanel = () => {
 
   const verifyEmailCode = async () => {
     setErrorMsg('');
-    const savedPassword = localStorage.getItem(PASSWORD_KEY);
-    if (!savedPassword || password !== savedPassword) { setErrorMsg('Password non valida'); return; }
     if (emailCode.length !== 6) { setErrorMsg('Inserisci il codice ricevuto via email'); return; }
     if (!emailAuthToken) { setErrorMsg('Token non presente. Clicca "Invia codice" e riprova.'); return; }
     try {
@@ -165,8 +153,8 @@ const AdminPanel = () => {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ADMIN_EMAIL, code: emailCode, token: emailAuthToken }) });
       const data = await res.json();
       if (data.success) {
-        setIsAuthenticated(true);
-        loadProducts();
+        // After 2FA verification, proceed with admin login
+        await handleAdminLogin();
       } else {
         setErrorMsg('Codice non valido o scaduto');
       }
@@ -175,40 +163,19 @@ const AdminPanel = () => {
     }
   };
 
-  // UI: Primo accesso (setup password)
-  if (isFirstAccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pastel-aqua-50 to-pastel-sky-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-8">
-            <div className="inline-flex p-4 bg-pastel-aqua-100 rounded-full mb-4">
-              <Shield className="text-pastel-aqua-600" size={32} />
-            </div>
-            <h1 className="text-2xl font-serif text-pastel-aqua-900 mb-2">Imposta Password Admin</h1>
-            <p className="text-pastel-aqua-700">Scegli una password sicura</p>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-pastel-aqua-800 mb-2">Nuova Password</label>
-              <div className="relative">
-                <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg focus:ring-2 focus:ring-pastel-aqua-500 focus:border-transparent" placeholder="Inserisci la nuova password" />
-                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-aqua-500 hover:text-pastel-aqua-700">{showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-pastel-aqua-800 mb-2">Conferma Password</label>
-              <div className="relative">
-                <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-3 border border-pastel-aqua-200 rounded-lg focus:ring-2 focus:ring-pastel-aqua-500 focus:border-transparent" placeholder="Conferma la password" />
-                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pastel-aqua-500 hover:text-pastel-aqua-700">{showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}</button>
-              </div>
-            </div>
-            {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
-            <button onClick={handleSetPassword} className="w-full bg-pastel-aqua-600 text-white py-3 rounded-lg font-semibold hover:bg-pastel-aqua-700 transition-colors">Imposta Password</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Upload helpers
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) { alert('Seleziona solo file immagine'); return; }
+      if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+  const triggerFileInput = () => fileInputRef.current?.click();
 
   // UI: Login (password + email code)
   if (!isAuthenticated) {
@@ -340,8 +307,19 @@ const AdminPanel = () => {
                       const importedProducts = JSON.parse(event.target?.result as string);
                       if (Array.isArray(importedProducts)) {
                         if (confirm(`Importare ${importedProducts.length} prodotti? Questo sostituirà i prodotti esistenti.`)) {
-                          saveProducts(importedProducts);
-                          alert(`Importati ${importedProducts.length} prodotti con successo!`);
+                          // Import products one by one
+                          const importProducts = async () => {
+                            try {
+                              for (const product of importedProducts) {
+                                await upsertProduct(product);
+                              }
+                              await loadProducts();
+                              alert(`Importati ${importedProducts.length} prodotti con successo!`);
+                            } catch (error) {
+                              alert(`Errore durante l'import: ${error}`);
+                            }
+                          };
+                          importProducts();
                         }
                       } else {
                         alert('File non valido. Deve contenere un array di prodotti.');
@@ -464,32 +442,66 @@ const AdminPanel = () => {
                   setImagePreview('');
                 }} className="px-6 py-3 border border-pastel-aqua-300 text-pastel-aqua-700 rounded-lg hover:bg-pastel-aqua-50 transition-colors">Annulla</button>
                 <button onClick={async () => {
-                  if (!newProduct.name || !newProduct.materials || !newProduct.technique || !newProduct.price) { alert('Compila tutti i campi obbligatori'); return; }
-                  let imagePath = newProduct.image || '';
-                  if (selectedImage) {
-                    setIsUploading(true);
-                    try { imagePath = imagePreview; } catch (_) { alert('Errore nel caricamento'); setIsUploading(false); return; }
-                    setIsUploading(false);
-                  } else if (!newProduct.image) { alert('Seleziona un\'immagine o inserisci un URL'); return; }
-                  
-                  if (isEditingProduct && editingProductId) {
-                    // Modifica prodotto esistente
-                    const updated: Product = { id: editingProductId, name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished ?? true, createdAt: new Date().toISOString() } as Product;
-                    await upsertProduct(updated);
-                    await loadProducts();
-                    setIsEditingProduct(false);
-                    setEditingProductId(null);
-                  } else {
-                    // Aggiungi nuovo prodotto
-                    const product: Product = { id: Date.now().toString(), name: newProduct.name!, category: newProduct.category!, image: imagePath, materials: newProduct.materials!, technique: newProduct.technique!, price: newProduct.price!, description: newProduct.description || '', isPublished: newProduct.isPublished ?? true, createdAt: new Date().toISOString() };
-                    await upsertProduct(product);
-                    await loadProducts();
+                  if (!newProduct.name || !newProduct.materials || !newProduct.technique || !newProduct.price) { 
+                    alert('Compila tutti i campi obbligatori'); 
+                    return; 
                   }
                   
-                  setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
-                  setSelectedImage(null);
-                  setImagePreview('');
-                  setIsAddingProduct(false);
+                  let imagePath = newProduct.image || '';
+                  if (selectedImage) {
+                    // For now, use the data URL directly (in production, you'd upload to a service)
+                    imagePath = imagePreview;
+                  } else if (!newProduct.image) { 
+                    alert('Seleziona un\'immagine o inserisci un URL'); 
+                    return; 
+                  }
+                  
+                  try {
+                    if (isEditingProduct && editingProductId) {
+                      // Modifica prodotto esistente
+                      const updated: Product = { 
+                        id: editingProductId, 
+                        name: newProduct.name!, 
+                        category: newProduct.category!, 
+                        image: imagePath, 
+                        materials: newProduct.materials!, 
+                        technique: newProduct.technique!, 
+                        price: newProduct.price!, 
+                        description: newProduct.description || '', 
+                        isPublished: newProduct.isPublished ?? true, 
+                        createdAt: new Date().toISOString() 
+                      } as Product;
+                      await upsertProduct(updated);
+                      await loadProducts();
+                      setIsEditingProduct(false);
+                      setEditingProductId(null);
+                    } else {
+                      // Aggiungi nuovo prodotto
+                      const product: Product = { 
+                        id: Date.now().toString(), 
+                        name: newProduct.name!, 
+                        category: newProduct.category!, 
+                        image: imagePath, 
+                        materials: newProduct.materials!, 
+                        technique: newProduct.technique!, 
+                        price: newProduct.price!, 
+                        description: newProduct.description || '', 
+                        isPublished: newProduct.isPublished ?? true, 
+                        createdAt: new Date().toISOString() 
+                      };
+                      await upsertProduct(product);
+                      await loadProducts();
+                    }
+                    
+                    setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
+                    setSelectedImage(null);
+                    setImagePreview('');
+                    setIsAddingProduct(false);
+                    
+                    alert('Prodotto salvato con successo!');
+                  } catch (error) {
+                    alert(`Errore nel salvataggio: ${error}`);
+                  }
                 }} disabled={isUploading} className={`px-6 py-3 rounded-lg transition-colors ${isUploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-pastel-aqua-600 hover:bg-pastel-aqua-700 text-white'}`}>
                   {isUploading ? 'Caricamento...' : (isEditingProduct ? 'Salva Modifiche' : 'Aggiungi Prodotto')}
                 </button>
@@ -555,10 +567,27 @@ const AdminPanel = () => {
                     >
                       <Plus size={16} />
                     </button>
-                    <button onClick={async () => { const updated = { ...product, isPublished: !product.isPublished }; await upsertProduct(updated); await loadProducts(); }} className={`p-2 rounded-lg ${product.isPublished ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title={product.isPublished ? 'Nascondi' : 'Mostra'}>
+                    <button onClick={async () => { 
+                      try {
+                        const updated = { ...product, isPublished: !product.isPublished }; 
+                        await upsertProduct(updated); 
+                        await loadProducts(); 
+                      } catch (error) {
+                        alert(`Errore nell'aggiornamento: ${error}`);
+                      }
+                    }} className={`p-2 rounded-lg ${product.isPublished ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`} title={product.isPublished ? 'Nascondi' : 'Mostra'}>
                       {product.isPublished ? 'Visibile' : 'Nascosto'}
                     </button>
-                    <button onClick={async () => { if (confirm('Eliminare questo prodotto?')) { await deleteProduct(product.id); await loadProducts(); } }} className="p-2 bg-pastel-rose-100 text-pastel-rose-600 rounded-lg hover:bg-pastel-rose-200" title="Elimina">
+                    <button onClick={async () => { 
+                      if (confirm('Eliminare questo prodotto?')) { 
+                        try {
+                          await deleteProduct(product.id); 
+                          await loadProducts(); 
+                        } catch (error) {
+                          alert(`Errore nell'eliminazione: ${error}`);
+                        }
+                      } 
+                    }} className="p-2 bg-pastel-rose-100 text-pastel-rose-600 rounded-lg hover:bg-pastel-rose-200" title="Elimina">
                       <Trash2 size={16} />
                     </button>
                   </div>
