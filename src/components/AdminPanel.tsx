@@ -45,6 +45,7 @@ const AdminPanel = () => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [changePasswordMsg, setChangePasswordMsg] = useState('');
+  const [imageError, setImageError] = useState('');
 
   // Carica prodotti da Firestore
   const loadProducts = async () => {
@@ -121,18 +122,29 @@ const AdminPanel = () => {
 
   // Gestione immagini locale (solo preview, non upload su Firebase Storage)
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) { alert('Seleziona solo file immagine'); return; }
-      if (file.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; }
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
+    setImageError('');
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    if (files.length > 1) {
+      setImageError('Puoi caricare solo una immagine per prodotto.');
+      return;
     }
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      setImageError('Seleziona solo file immagine');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('L\'immagine deve essere inferiore a 5MB');
+      return;
+    }
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setImagePreview(result);
+    };
+    reader.readAsDataURL(file);
   };
   const triggerFileInput = () => fileInputRef.current?.click();
 
@@ -277,6 +289,7 @@ const AdminPanel = () => {
                   setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
                   setSelectedImage(null);
                   setImagePreview('');
+                  setImageError('');
                 }} className="text-pastel-aqua-500 hover:text-pastel-aqua-700">
                   <X size={24} />
                 </button>
@@ -301,7 +314,8 @@ const AdminPanel = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-pastel-aqua-800 mb-2">Immagine Prodotto *</label>
                   <div className="border-2 border-dashed border-pastel-aqua-300 rounded-lg p-6 text-center hover:border-pastel-aqua-400 transition-colors">
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" multiple={false} />
+                    {imageError && <div className="text-red-500 text-sm mt-2">{imageError}</div>}
                     {!imagePreview ? (
                       <div>
                         <Upload className="mx-auto mb-4 text-pastel-aqua-400" size={48} />
@@ -313,7 +327,7 @@ const AdminPanel = () => {
                       <div>
                         <div className="relative inline-block">
                           <img src={imagePreview} alt="Preview" className="max-w-full h-48 object-cover rounded-lg" />
-                          <button type="button" onClick={() => { setSelectedImage(null); setImagePreview(''); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
+                          <button type="button" onClick={() => { setSelectedImage(null); setImagePreview(''); if (fileInputRef.current) fileInputRef.current.value = ''; setImageError(''); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors">
                             <X size={16} />
                           </button>
                         </div>
@@ -364,6 +378,7 @@ const AdminPanel = () => {
                   setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
                   setSelectedImage(null);
                   setImagePreview('');
+                  setImageError('');
                 }} className="px-6 py-3 border border-pastel-aqua-300 text-pastel-aqua-700 rounded-lg hover:bg-pastel-aqua-50 transition-colors">Annulla</button>
                 <button onClick={async () => {
                   if (!newProduct.name || !newProduct.materials || !newProduct.technique || !newProduct.price) { 
@@ -397,6 +412,7 @@ const AdminPanel = () => {
                     setNewProduct({ name: '', category: 'orecchini', image: '', materials: '', technique: '', price: '', description: '', isPublished: true });
                     setSelectedImage(null);
                     setImagePreview('');
+                    setImageError('');
                     alert('Prodotto salvato con successo!');
                   } catch (error) {
                     alert('Errore nel salvataggio');
