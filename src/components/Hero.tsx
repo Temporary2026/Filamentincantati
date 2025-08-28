@@ -1,5 +1,8 @@
 import { ArrowRight, Sparkles } from 'lucide-react';
 
+const isHome = typeof window !== 'undefined' ? window.location.pathname === '/' || window.location.pathname.endsWith('index.html') : true;
+const anchorHref = (hash: string) => isHome ? `#${hash}` : `/index.html#${hash}`;
+
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
@@ -35,7 +38,7 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="#collezione"
+                href={anchorHref('collezione')}
                 className="inline-flex items-center justify-center px-8 py-4 bg-pastel-rose-400 text-white font-semibold rounded-full hover:bg-pastel-rose-500 transition-all duration-300 hover:shadow-pastel-lg hover:scale-105"
               >
                 Sfoglia la Collezione
@@ -43,7 +46,7 @@ const Hero = () => {
               </a>
               
               <a
-                href="#artigiana"
+                href={anchorHref('artigiana')}
                 className="inline-flex items-center justify-center px-8 py-4 border-2 border-pastel-sky-200 text-pastel-sky-200 font-semibold rounded-full hover:bg-pastel-sky-200 hover:text-pastel-aqua-900 transition-all duration-300"
               >
                 Conosci l'Artigiana

@@ -1,6 +1,9 @@
 import React from 'react';
 import { Menu, X, Phone } from 'lucide-react';
 
+const isHome = typeof window !== 'undefined' ? window.location.pathname === '/' || window.location.pathname.endsWith('index.html') : true;
+const anchorHref = (hash: string) => isHome ? `#${hash}` : `/index.html#${hash}`;
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -23,10 +26,10 @@ const Header = () => {
           </div>
           
           <nav className="hidden md:flex space-x-8">
-            <a href="#collezione" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Collezione</a>
-            <a href="#artigiana" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">L'Artigiana</a>
-            <a href="#acquista" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Acquista</a>
-            <a href="#contatti" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Contatti</a>
+            <a href={anchorHref('collezione')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Collezione</a>
+            <a href={anchorHref('artigiana')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">L'Artigiana</a>
+            <a href={anchorHref('acquista')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Acquista</a>
+            <a href={anchorHref('contatti')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors font-medium">Contatti</a>
           </nav>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -47,10 +50,10 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-pastel-aqua-100">
             <nav className="flex flex-col space-y-4">
-              <a href="#collezione" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Collezione</a>
-              <a href="#artigiana" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">L'Artigiana</a>
-              <a href="#acquista" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Acquista</a>
-              <a href="#contatti" className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Contatti</a>
+              <a href={anchorHref('collezione')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Collezione</a>
+              <a href={anchorHref('artigiana')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">L'Artigiana</a>
+              <a href={anchorHref('acquista')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Acquista</a>
+              <a href={anchorHref('contatti')} className="text-pastel-aqua-700 hover:text-pastel-aqua-500 transition-colors">Contatti</a>
               <a href="tel:+393295381974" className="flex items-center text-pastel-aqua-600 bg-pastel-sky-50 px-4 py-2 rounded-full">
                 <Phone size={16} className="mr-2" />
                 +39 329 538 1974
